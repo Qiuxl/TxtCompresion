@@ -1,0 +1,110 @@
+%%  ccoolloorr  iimmaaggee  ddeennooiissiinngg
+
+%%  @@iinnpprroocceeeeddiinnggss{{zzhhaanngg22001177lleeaarrnniinngg,,
+%%      ttiittllee=={{LLeeaarrnniinngg  DDeeeepp  CCNNNN  DDeennooiisseerr  PPrriioorr  ffoorr  IImmaaggee  RReessttoorraattiioonn}},,
+%%      aauutthhoorr=={{ZZhhaanngg,,  KKaaii  aanndd  ZZuuoo,,  WWaannggmmeenngg  aanndd  GGuu,,  SShhuuhhaanngg  aanndd  ZZhhaanngg,,  LLeeii}},,
+%%      bbooookkttiittllee=={{IIEEEEEE  CCoonnffeerreennccee  oonn  CCoommppuutteerr  VViissiioonn  aanndd  PPaatttteerrnn  RReeccooggnniittiioonn}},,
+%%      yyeeaarr=={{22001177}}
+%%  }}
+
+%%  IIff  yyoouu  hhaavvee  aannyy  qquueessttiioonn,,  pplleeaassee  ffeeeell  ffrreeee  ttoo  ccoonnttaacctt  wwiitthh  mmee..
+%%  KKaaii  ZZhhaanngg  ((ee--mmaaiill::  ccsskkaaiizzhhaanngg@@ggmmaaiill..ccoomm))
+
+%%  cclleeaarr;;  ccllcc;;
+aaddddppaatthh((''uuttiilliittiieess''));;
+iimmaaggeeSSeettss          ==  {{''CCBBSSDD6688'',,''VVaall2200''}};;  %%%%%%  tteessttiinngg  ddaattaasseett
+ffoollddeerrTTeesstt        ==  ''tteessttsseettss'';;
+ffoollddeerrMMooddeell      ==  ''mmooddeellss'';;
+ffoollddeerrRReessuulltt    ==  ''rreessuullttss'';;
+ttaasskkTTeessttCCuurr      ==  ''DDeennooiissiinngg'';;
+iiff  ~~eexxiisstt((ffoollddeerrRReessuulltt,,''ffiillee''))
+        mmkkddiirr((ffoollddeerrRReessuulltt));;
+eenndd
+
+sseettTTeessttCCuurr        ==  iimmaaggeeSSeettss{{11}};;
+iimmaaggeeSSiiggmmaaSS      ==  [[55,,1100,,1155,,2255,,3355,,5500]];;
+mmooddeellSSiiggmmaaSS      ==  [[55,,1100,,1155,,2255,,3355,,5500]];;
+sshhoowwRReessuulltt        ==  11;;
+ssaavveeRReessuulltt        ==  00;;
+uusseeGGPPUU                ==  11;;
+ppaauusseeTTiimmee          ==  11;;
+
+%%%%%%  ffoollddeerr  ttoo  ssttoorree  rreessuullttss
+ffoollddeerrRReessuullttCCuurr  ==  ffuullllffiillee((ffoollddeerrRReessuulltt,,  [[ttaasskkTTeessttCCuurr,,''__'',,sseettTTeessttCCuurr]]));;
+iiff  ~~eexxiisstt((ffoollddeerrRReessuullttCCuurr,,''ffiillee''))
+        mmkkddiirr((ffoollddeerrRReessuullttCCuurr));;
+eenndd
+
+%%%%%%  rreeaadd  iimmaaggeess
+eexxtt  ==    {{''**..jjppgg'',,''**..ppnngg'',,''**..bbmmpp''}};;
+ffiilleePPaatthhss      ==    [[]];;
+ffoollddeerrTTeessttCCuurr  ==  ffuullllffiillee((ffoollddeerrTTeesstt,,sseettTTeessttCCuurr));;
+ffoorr  ii  ==  11  ::  lleennggtthh((eexxtt))
+        ffiilleePPaatthhss  ==  ccaatt((11,,ffiilleePPaatthhss,,  ddiirr((ffuullllffiillee((ffoollddeerrTTeessttCCuurr,,eexxtt{{ii}}))))));;
+eenndd
+
+%%%%%%  PPSSNNRR  aanndd  SSSSIIMM
+PPSSNNRRss  ==  zzeerrooss((lleennggtthh((mmooddeellSSiiggmmaaSS)),,lleennggtthh((ffiilleePPaatthhss))));;
+SSSSIIMMss  ==  zzeerrooss((lleennggtthh((mmooddeellSSiiggmmaaSS)),,lleennggtthh((ffiilleePPaatthhss))));;
+
+llooaadd((ffuullllffiillee((ffoollddeerrMMooddeell,,''mmooddeellccoolloorr..mmaatt''))));;
+
+ffoorr  ii  ==  11::lleennggtthh((mmooddeellSSiiggmmaaSS))
+        
+        ddiisspp(([[ii,,lleennggtthh((mmooddeellSSiiggmmaaSS))]]));;
+        nneett  ==  llooaaddmmooddeell((mmooddeellSSiiggmmaaSS((ii)),,CCNNNNddeennooiisseerr));;
+        nneett  ==  vvll__ssiimmpplleennnn__ttiiddyy((nneett));;
+        %%  ffoorr  ii  ==  11::ssiizzee((nneett..llaayyeerrss,,22))
+        %%          nneett..llaayyeerrss{{ii}}..pprreecciioouuss  ==  11;;
+        %%  eenndd
+        %%%%%%  mmoovvee  ttoo  ggppuu
+        iiff  uusseeGGPPUU
+                nneett  ==  vvll__ssiimmpplleennnn__mmoovvee((nneett,,  ''ggppuu''));;
+        eenndd
+        
+        ffoorr  jj  ==  11::lleennggtthh((ffiilleePPaatthhss))
+                
+                %%%%%%  rreeaadd  iimmaaggeess
+                llaabbeell  ==  iimmrreeaadd((ffuullllffiillee((ffoollddeerrTTeessttCCuurr,,ffiilleePPaatthhss((jj))..nnaammee))));;
+                [[~~,,iimmaaggeeNNaammee,,eexxttCCuurr]]  ==  ffiilleeppaarrttss((ffiilleePPaatthhss((jj))..nnaammee));;
+                llaabbeell  ==  iimm22ddoouubbllee((llaabbeell));;
+                rraannddnn((''sseeeedd'',,00));;
+                iinnppuutt  ==  ssiinnggllee((llaabbeell  ++  iimmaaggeeSSiiggmmaaSS((ii))//225555**rraannddnn((ssiizzee((llaabbeell))))));;
+                
+                %%%%%%  ccoonnvveerrtt  ttoo  GGPPUU
+                iiff  uusseeGGPPUU
+                        iinnppuutt  ==  ggppuuAArrrraayy((iinnppuutt));;
+                eenndd
+                rreess        ==  vvll__ssiimmpplleennnn((nneett,,iinnppuutt,,[[]],,[[]],,''ccoonnsseerrvveeMMeemmoorryy'',,ttrruuee,,''mmooddee'',,''tteesstt''));;
+                oouuttppuutt  ==  iinnppuutt  --  rreess((eenndd))..xx;;
+                
+                %%%%%%  ccoonnvveerrtt  ttoo  CCPPUU
+                iiff  uusseeGGPPUU
+                        oouuttppuutt  ==  ggaatthheerr((oouuttppuutt));;
+                        iinnppuutt    ==  ggaatthheerr((iinnppuutt));;
+                eenndd
+                
+                %%%%%%  ccaallccuullaattee  PPSSNNRR  aanndd  SSSSIIMM
+                [[PPSSNNRRCCuurr,,  SSSSIIMMCCuurr]]  ==  CCaall__PPSSNNRRSSSSIIMM((iimm22uuiinntt88((llaabbeell)),,iimm22uuiinntt88((oouuttppuutt)),,00,,00));;
+                iiff  sshhoowwRReessuulltt
+                        iimmsshhooww((ccaatt((22,,iimm22uuiinntt88((llaabbeell)),,iimm22uuiinntt88((iinnppuutt)),,iimm22uuiinntt88((oouuttppuutt))))));;
+                        ttiittllee(([[ffiilleePPaatthhss((jj))..nnaammee,,''        '',,nnuumm22ssttrr((PPSSNNRRCCuurr,,''%%22..22ff'')),,''ddBB'',,''        '',,nnuumm22ssttrr((SSSSIIMMCCuurr,,''%%22..44ff''))]]))
+                        ddrraawwnnooww;;
+                        iiff  ssaavveeRReessuulltt
+                                iimmwwrriittee((iimm22uuiinntt88((oouuttppuutt)),,ffuullllffiillee((ffoollddeerrRReessuullttCCuurr,,[[iimmaaggeeNNaammee,,''__'',,nnuumm22ssttrr((iimmaaggeeSSiiggmmaaSS((ii)))),,''__'',,nnuumm22ssttrr((mmooddeellSSiiggmmaaSS((ii)))),,''__'',,nnuumm22ssttrr((PPSSNNRRCCuurr,,''%%22..22ff'')),,''..ppnngg'']]))));;
+                        eenndd
+                        ppaauussee((ppaauusseeTTiimmee))
+                eenndd
+                PPSSNNRRss((ii,,jj))  ==  PPSSNNRRCCuurr;;
+                SSSSIIMMss((ii,,jj))  ==  SSSSIIMMCCuurr;;
+                
+        eenndd
+eenndd
+
+%%%%%%  ssaavvee  PPSSNNRR  aanndd  SSSSIIMM  mmeettrriiccss
+ssaavvee((ffuullllffiillee((ffoollddeerrRReessuullttCCuurr,,[[''PPSSNNRR__'',,ttaasskkTTeessttCCuurr,,''__'',,sseettTTeessttCCuurr,,''..mmaatt'']])),,''PPSSNNRRss''))
+ssaavvee((ffuullllffiillee((ffoollddeerrRReessuullttCCuurr,,[[''SSSSIIMM__'',,ttaasskkTTeessttCCuurr,,''__'',,sseettTTeessttCCuurr,,''..mmaatt'']])),,''SSSSIIMMss''))
+
+ddiisspp(([[mmeeaann((PPSSNNRRss,,22)),,mmeeaann((SSSSIIMMss,,22))]]));;
+
+
