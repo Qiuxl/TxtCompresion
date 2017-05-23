@@ -13,7 +13,7 @@ import java.util.Map;
 
 /**
  * huffman解压
- * @author andy
+ * modified by  Qiu ZH
  *
  */
 public class HuffmanUnCompress {
@@ -25,7 +25,7 @@ public class HuffmanUnCompress {
 	{
 		uiGui = ptr;
 	}
-	public void Decode(String path) //这里需要注意的是给出的路径需要
+	public void Decode(String path) //这里需要注意的是给出的路径
 	{
 		if(path == "nullnull")
 			return;

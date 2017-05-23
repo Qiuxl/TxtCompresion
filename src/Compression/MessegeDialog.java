@@ -13,7 +13,11 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JTextArea;
-
+/**
+ * @author Qzh
+ * @function: a box to display information 
+ * 
+ * */
 public class MessegeDialog extends JDialog {
 
 	public MessegeDialog(Frame owner, String msg) {

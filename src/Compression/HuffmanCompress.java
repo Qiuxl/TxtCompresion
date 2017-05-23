@@ -18,6 +18,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.PriorityQueue;
 
 /**
  * 哈夫曼压缩实现类
@@ -25,7 +26,8 @@ import java.util.Map.Entry;
  * http://bill56.iteye.com/blog/2272332
  * http://www.cs.dartmouth.edu/~traviswp/cs10/lab/lab4/lab4.html
  * http://freesourcecode.net/javaprojects/79503/Huffman-coding-in-java#.V1Aajfl97IV
- * @author andy
+ * @author andy，
+ * modified by Qzh 2017-05-22
  *
  */
 public class HuffmanCompress {
@@ -35,6 +37,7 @@ public class HuffmanCompress {
 	private List<HuffmanTree> allHuffmanNodes = null;
 	private HuffmanTree tree = null;
 	private List<String> encodeList = null;
+	static List<Byte> fileContentList=new ArrayList<Byte>();
 	private StringBuffer encodeResult = new StringBuffer();
 	private Gui ui;
 	public void setUI(Gui uiTemp)
@@ -48,24 +51,34 @@ public class HuffmanCompress {
 	public void saveFile(String targetPath)
 	{
 		try {
-			writeHead(targetPath+".Huffman", decodeMap);
-			
+			writeHead(targetPath+".Huffman", decodeMap);	
 			writeContent(targetPath+".Huffman", encodeList);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
 	}
+	//对于重复编码必须注意，初始化，消除上一次编码表或者编码结果的影响
 	public void Intialize() {
 		encodeMap.clear();
 		decodeMap.clear();
+		fileContentList.clear();
+		if(encodeList != null)
+		{
+			encodeList.clear();
+	//		System.out.println("list size: " + encodeList.size());
+		}
+		if(allHuffmanNodes != null)
+			allHuffmanNodes.clear();
 		if(encodeResult.length() > 0 )
 		{
-			encodeResult.delete(0, encodeResult.length()-1);
+			encodeResult.delete(0, encodeResult.length());
 		}
+		
 		
 	}
 	public void Compress(String sourcePath){
+		
 		
 		if(ui == null)
 		{
@@ -74,13 +87,12 @@ public class HuffmanCompress {
 		}
 		ui.areaShow.setText("");
 		
-		long beginTime=System.currentTimeMillis();
 		HashMap<Byte,Integer> mapResult=countASSCIBySourceFile(new File(sourcePath));
 		
 		//初始化huffman节点
-		allHuffmanNodes=initializeHuffmanNode(mapResult);
+	//	allHuffmanNodes=initializeHuffmanNode(mapResult);
 		//构造huffman树
-		tree=constructHuffmanTree(allHuffmanNodes);
+		tree=constructHuffmanTree(mapResult);
 		encodingByHuffman(tree, new StringBuffer());
 
 		//初始化解码表
@@ -91,12 +103,6 @@ public class HuffmanCompress {
 		//将Huffma编码对象写入文件
 		ui.areaShow.setText(encodeResult.toString());
 		ui.showResult.setText(encodeResult.toString());
-		System.out.println("编码文件写入成功，文件路径："+new File(sourcePath+".Huffman").getAbsolutePath());
-		System.out.println("解码表：");
-		System.out.println(decodeMap);
-	//	readContent(sourcePath+".Huffman");
-		long endTime=System.currentTimeMillis();
-		System.out.println("压缩耗时："+(endTime-beginTime)+"ms");
 	}
 	/**
 	 * 将Huffman编码Map写入头文件
@@ -123,8 +129,13 @@ public class HuffmanCompress {
 	 * @param string
 	 * @param encodeList
 	 */
-	private static void writeContent(String compressFile, List<String> encodeList) {
+	private void writeContent(String compressFile, List<String> encodeList) {
+
 		StringBuffer sb=new StringBuffer();
+		if(sb.length() > 0)
+		{
+			sb.delete(0, sb.length());
+		}
 		for(String str:encodeList){
 			sb.append(str);
 		}
@@ -162,7 +173,7 @@ public class HuffmanCompress {
 
 		return result;
 	}
-	static List<Byte> fileContentList=new ArrayList<Byte>();
+	
 
 	static void initDecodeMap(Map<String,String> encodeMap){
 		Iterator<Entry<String, String>> iter = encodeMap.entrySet().iterator();
@@ -209,30 +220,64 @@ public class HuffmanCompress {
 			prefix.deleteCharAt(prefix.length()-1);
 		}
 	}
+	//为使用优先队列增加一个比较器
+	public static Comparator<HuffmanTree> myComparator = new Comparator<HuffmanTree>() {
+
+		@Override
+		public int compare(HuffmanTree o1, HuffmanTree o2) {
+			// TODO Auto-generated method stub
+			return  (o1.weight - o2.weight); //返回-1表示前者更小，优先级更高
+		}
+		
+	};
 	/**
 	 * 递归构造Huffman树
 	 * @param list
 	 * @return
 	 */
-	static HuffmanTree constructHuffmanTree(List<HuffmanTree> list){
-		if(list==null){
-			return null;
+	public HuffmanTree constructHuffmanTree(Map<Byte,Integer> map){
+		
+		PriorityQueue<HuffmanTree> priorityQueue = new PriorityQueue<>(10,myComparator);
+		//构造优先队列先
+		Iterator<Entry<Byte, Integer>> iter = map.entrySet().iterator();
+		while (iter.hasNext()) {
+			@SuppressWarnings("rawtypes")
+			Map.Entry entry = (Map.Entry) iter.next();
+			Object key = entry.getKey();
+			Object val = entry.getValue();
+			priorityQueue.add(new HuffmanTree(null,null,key,new Integer(val.toString())));
 		}
-		if(list.size()==1){
-			return list.get(0);
+//		for(HuffmanTree element : list)
+//		{
+//			priorityQueue.add(element);
+//		}
+		while(priorityQueue.size() >= 2)
+		{
+			HuffmanTree left = priorityQueue.poll();
+			HuffmanTree right = priorityQueue.poll();
+			Integer rootValue=left.weight+right.weight;
+			HuffmanTree root=new HuffmanTree(left, right, rootValue, rootValue);
+			priorityQueue.add(root);
 		}
-		if(list.size()>=2){
-			HuffmanTree leftSymbol=list.get(0);
-			HuffmanTree rightSymbol=list.get(1);
-			Integer rootValue=leftSymbol.weight+rightSymbol.weight;
-			HuffmanTree root=new HuffmanTree(leftSymbol, rightSymbol, rootValue, rootValue);
-			list.remove(leftSymbol);
-			list.remove(rightSymbol);
-			list.add(root);
-			return constructHuffmanTree(sortHuffmanTree(list));
-
-		}
-		return null;
+		return priorityQueue.poll();
+//		if(list==null){
+//			return null;
+//		}
+//		if(list.size()==1){
+//			return list.get(0);
+//		}
+//		if(list.size()>=2){
+//			HuffmanTree leftSymbol=list.get(0);
+//			HuffmanTree rightSymbol=list.get(1);
+//			Integer rootValue=leftSymbol.weight+rightSymbol.weight;
+//			HuffmanTree root=new HuffmanTree(leftSymbol, rightSymbol, rootValue, rootValue);
+//			list.remove(leftSymbol);
+//			list.remove(rightSymbol);
+//			list.add(root);
+//			return constructHuffmanTree(sortHuffmanTree(list));
+//
+//		}
+//		return null;
 	}
 
 	
@@ -242,7 +287,7 @@ public class HuffmanCompress {
 	 * @return
 	 */
 	static List<HuffmanTree> initializeHuffmanNode(Map<Byte,Integer> map){
-		map=sortByValue(map);
+	//	map=sortByValue(map);
 		List<HuffmanTree> list=new ArrayList<HuffmanTree>();
 		Iterator<Entry<Byte, Integer>> iter = map.entrySet().iterator();
 		while (iter.hasNext()) {

@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 import java.io.UnsupportedEncodingException;
-
+import java.nio.channels.NonWritableChannelException;
 import java.util.ArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -60,6 +60,9 @@ import javax.swing.event.CaretListener;
 
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
+
+import org.omg.IOP.ENCODING_CDR_ENCAPS;
+
 import javax.swing.text.html.HTMLDocument.HTMLReader.IsindexAction;
 
 import layout.TableLayout;
@@ -83,7 +86,7 @@ public class Gui extends JFrame {
 	
     private int EncodeWay = 0;
     private int Humman = 1;  //记录压缩的方式
-    
+    private int LZW = 2;
 	private Lock EditLock = new ReentrantLock();   //编辑框设置的时候的lock
 	private JScrollBar jscrollBar1;
 	private ArrayList<Integer> recordline = new ArrayList<Integer>();
@@ -97,6 +100,8 @@ public class Gui extends JFrame {
     private static HuffmanCompress huffmanCompress = new HuffmanCompress();
     private static HuffmanUnCompress huffmanUnCompress = new HuffmanUnCompress();
     private static HuffmanUnCompress decodeHuffman = new HuffmanUnCompress();
+    private static LZWcompress lzWcompress = new LZWcompress();
+    
     
 	JMenuBar topMenu;
 	Container c;  
@@ -132,6 +137,7 @@ public class Gui extends JFrame {
 		
 		huffmanCompress.setUI(this);
 		huffmanUnCompress.setUI(this);
+		lzWcompress.SetGui(this);
 		showResult.setLineWrap(true);
 		
 		areaShow.setEditable(false);// 右边不可编辑
@@ -153,31 +159,6 @@ public class Gui extends JFrame {
 	    this.setJMenuBar(topMenu);
 		this.add(topTool,BorderLayout.NORTH);
 		this.pack();
-	//   设置事件监听器，动态显示行数和列数  
-		textedit.addCaretListener(new CaretListener() {
-			
-			@Override
-			public void caretUpdate(CaretEvent e) {
-				if(enableEditlistern==false)
-				{
-					System.out.println("Lock by user");
-					return;
-				}
-				// TODO Auto-generated method stub
-				try {
-					int pos = textedit.getCaretPosition();
-	                int lines = textedit.getLineOfOffset(pos) + 1; 
-	                //获取列数 
-	                int col = pos - textedit.getLineStartOffset(lines-1);
-	                cols.setText("Column "+col);
-	                Gui.this.lines.setText("Line "+lines);
-
-				} catch (Exception e2) {
-					// TODO: handle exception
-					warn.setText("No cursor info");
-				}
-			}
-		});
 	}
 	
 	public String getText()
@@ -233,12 +214,10 @@ public class Gui extends JFrame {
 		topTool = new JToolBar();  //工具栏
 		JButton OpenBtn = new JButton(new ImageIcon(this.getClass().getResource("/Icon/icon_open1.png")));
 		JButton SaveBtn = new JButton(new ImageIcon(this.getClass().getResource("/Icon/icon_save.png")));
-		JButton exportBtn = new JButton(new ImageIcon(this.getClass().getResource("/Icon/icon_export.png")));	
 		
 		
 		
 		OpenBtn.setBorderPainted(false);
-		exportBtn.setBorderPainted(false);
 		SaveBtn.setBorderPainted(false);
 		
 		JMenu file = new JMenu("File");
@@ -248,34 +227,25 @@ public class Gui extends JFrame {
 		
 		
 		JMenuItem haffItem = new JMenuItem("Haffman");
-		JMenuItem uploadItem = new JMenuItem("Upload");
+		JMenuItem LZWitem = new JMenuItem("LZW");
 		JMenuItem downItem = new JMenuItem("Pull");
 		JMenuItem DisconItem = new JMenuItem("Disconnect");
 		
 		JMenuItem openItem = new JMenuItem("Open",icon_open);	
-		JMenuItem saveItem = new JMenuItem("Save",new ImageIcon("./Icon/icon_save.png"));
 		JMenuItem saveAsItem = new JMenuItem("Save as");
 		JMenuItem closeItem = new JMenuItem("Close");
-		JMenuItem ImportCss = new JMenuItem("Import Css File");   // 提供给用户导入自己的css文件的按钮
-			
-		JMenuItem HuffmanDecode = new JMenuItem("Huffman");
-		
+		JMenuItem LzwDecode = new JMenuItem("LZW decode");   // 提供给用户导入自己的css文件的按钮			
+		JMenuItem HuffmanDecode = new JMenuItem("Huffman");	
 		JMenuItem AutoRefresh = new JMenuItem("开启");
 		JMenuItem RefreshByhand = new JMenuItem("关闭");
+		
+		
 		AutoRefresh.setFont(textStyle);
-		RefreshByhand.setFont(textStyle);
-		
-		
-		
+		RefreshByhand.setFont(textStyle);	
 		JMenuItem About = new JMenuItem("About this");
-		
-
-
 		
 		saveAsItem.setAccelerator(saveAsKS);
 		openItem.setAccelerator(openKS);
-		uploadItem.setAccelerator(KeyStroke.getKeyStroke('R', InputEvent.CTRL_MASK));  //刷新的功能
-		saveItem.setAccelerator(KeyStroke.getKeyStroke('S', InputEvent.CTRL_MASK));
 	//	exportItem.setAccelerator(KeyStroke.getKeyStroke('W', InputEvent.CTRL_MASK));
 //添加监听事件
 		openItem.addActionListener(new ActionListener() {
@@ -286,6 +256,7 @@ public class Gui extends JFrame {
 				Open_file();
 			}
 		});
+		
 //save as的监听事件
 		saveAsItem.addActionListener(new ActionListener() {
 			
@@ -296,20 +267,12 @@ public class Gui extends JFrame {
 			}
 		});
 //save 的监听事件
-		saveItem.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
-				save();
-			}
-		});
 		SaveBtn.addActionListener(new ActionListener() {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				// TODO Auto-generated method stub
-				save();
+				save_as();
 			}
 		});
 		OpenBtn.addActionListener(new ActionListener() {
@@ -361,12 +324,24 @@ public class Gui extends JFrame {
 			isCode = true;
 			
 		});
+		LZWitem.addActionListener( e ->{
+			if(!isOpen)
+				return;
+			lzWcompress.initialize();
+			lzWcompress.compress(currentFile);
+			EncodeWay = LZW;
+			isCode = true;
+		});
+		LzwDecode.addActionListener(e->{
+			if(!isOpen)
+				return;
+			lzWcompress.Decode(currentFile);
+			isCode = true;
+		});
 		file.setMnemonic('F');
 //		file.add(NewFileItem);
 //		file.addSeparator();
 		file.add(openItem);
-		file.addSeparator();
-		file.add(saveItem);
 		file.addSeparator();
 		file.add(saveAsItem);
 		file.addSeparator();
@@ -375,12 +350,11 @@ public class Gui extends JFrame {
 		
 		Decode.add(HuffmanDecode);
 		Decode.addSeparator();
-		Decode.add(ImportCss);
+		Decode.add(LzwDecode);
 		
 		Encode.add(haffItem);
-		Encode.add(uploadItem);
-		Encode.add(downItem);
-		Encode.add(DisconItem);
+		Encode.add(LZWitem);
+	
 		
 		
 		help.add(About);
@@ -431,7 +405,6 @@ public class Gui extends JFrame {
 	
 	//创建一个一行一列的tablelayout
 		
-		
 		double size[][] ={
 				{0.20,0.39,5,TableLayout.FILL}, 
 				{TableLayout.FILL}};
@@ -448,22 +421,9 @@ public class Gui extends JFrame {
 		InitializeDefaultCss();
 		
 		areaShow.setAutoscrolls(true);
-	
-//		Markdown4jProcessor myProcessor = new Markdown4jProcessor();
-//		try {
-//			after = myProcessor.process(primary);
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//		textedit.setText(after);
-//		areaShow.setText(after);
-
-	//	JSplitPane pane1 = new 
 		textedit.setFont(new Font("微软雅黑", Font.PLAIN, 14));
 		textedit.setEditable(false);
 		JScrollPane sroll2 = new JScrollPane(middlepane);
-	//	JScrollPane sroll3 = new JScrollPane(areaShow);
 		JScrollPane sroll3 = new JScrollPane(showResult);
 		
 		areaShow.setAutoscrolls(true);
@@ -580,11 +540,8 @@ public class Gui extends JFrame {
 				textedit.setText(context);
 				showResult.setText("");
 				enableEditlistern = true;
-			//	textedit.setCaretPosition(context.length());
-		//		update_lineTag();
 
 				textedit.setCaretPosition(0);
-		//		System.out.println(curPosition);
 				isEdited = false;
 				String currentTitle = Gui.this.getTitle();
 				int index = currentTitle.indexOf("As a server");
@@ -681,6 +638,10 @@ public class Gui extends JFrame {
 				currentFile = path;
 			if(EncodeWay == Humman)
 				huffmanCompress.saveFile(path);
+			else if(EncodeWay == LZW)
+			{
+				lzWcompress.SaveFile(path);
+			}
 			else {
 				try {
 					BufferedOutputStream buffout = new BufferedOutputStream(new FileOutputStream(path));
@@ -696,28 +657,7 @@ public class Gui extends JFrame {
 		}
 			
    }
-// 关闭的时候的响应函数，当被编辑过的时候
-   public void save_on_close()
-   {
-	  // new OpenDialog(this, "Save or Not");
-	//   new CloseDialog(this, "Save or Not?");
-   }   
-   public void update_lineTag()
-   {
-//       int line2 = textedit.getLineCount();
-//       
-//       if(totallines <= line2)
-//       {
-//       	for(;totallines<=line2-1;totallines++)
-//       		lineArea.append(totallines+2+"\n");
-//       }
-//       else{
-       	//重新绘制图案
-       	lineArea.setText("");
-       	for(int i=1;i<=textedit.getLineCount();i++)
-       		lineArea.append(i+"\n");
-//       }
-   }
+
    /*
     * funtion：点击导航栏的时候中间屏幕的移动
     * 
@@ -731,7 +671,7 @@ public class Gui extends JFrame {
    public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		Gui myGui = new Gui();
-		myGui.setTitle("My markdown");
+		myGui.setTitle("My Compressor");
 		myGui.setSize(800,600);
 		myGui.setLocationRelativeTo(null);
 		myGui.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

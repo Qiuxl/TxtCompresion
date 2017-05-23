@@ -9,7 +9,7 @@ public class HuffmanTree {
 	public HuffmanTree left;
 	public HuffmanTree right;
 	public Object value;
-	public int weight;//权重
+	public int weight;
 	public HuffmanTree(HuffmanTree left, HuffmanTree right, Object value,
 			int weight) {
 		super();

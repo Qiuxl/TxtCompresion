@@ -56,7 +56,7 @@ public class OpenDialog extends JDialog {
 			public void actionPerformed(ActionEvent e) {
 				// TODO Auto-generated method stub
 				OpenDialog.this.dispose();
-				temp.isEdited = false;
+				temp.isSave = true;
 				temp.Open_file();
 			}
 			
